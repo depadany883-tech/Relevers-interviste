@@ -1,59 +1,933 @@
-Relevers
-● Sheet
-0 interviste
-👤 Utenti
-🏠 Locali
-📊 Dati
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Relevers — Interviste</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #7b61ff;
+    --accent2: #ff6b6b;
+    --green: #2dce89;
+    --yellow: #ffd166;
+    --text: #f0f0f5;
+    --muted: #7070a0;
+    --r: 14px;
+  }
 
-ANAGRAFICA
-Nome (opzionale)
-Età
-Contatto beta (email / tel)
-DOMANDE
-Q1
-Esci senza piano preciso — quanto spesso?
-1
-mai
-2
-3
-a volte
-4
-5
-spesso
-Q2 — Usa già app per decidere dove andare?
-✓ Sì
-✗ No
-Q3
-Quante volte non sai dove "succede qualcosa" stasera?
-1
-mai
-2
-3
-4
-5
-spesso
-Q4 — Ha cambiato posto su segnalazione di qualcuno?
-✓ Sì
-✗ No
-Q5
-Userebbe un radar real-time per vedere dove si radunano persone con i tuoi stessi gusti?
-1
-no
-2
-3
-forse
-4
-5
-sì!
-Reazione al concept
-Dopo aver mostrato Relevers — reazione?
-1
-negativa
-2
-3
-neutro
-4
-5
-positiva
-Note libere — frase notevole dell'intervistato
-SALVA INTERVISTA →
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .counter-pill {
+    background: var(--accent);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .counter-pill:active { background: #6247ff; }
+  .sync-indicator {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+  .sync-indicator.idle { background: rgba(112,112,160,0.15); color: var(--muted); }
+  .sync-indicator.syncing { background: rgba(255,209,102,0.15); color: var(--yellow); }
+  .sync-indicator.ok { background: rgba(45,206,137,0.15); color: var(--green); }
+  .sync-indicator.err { background: rgba(255,107,107,0.15); color: var(--accent2); }
+
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .main { padding: 20px 20px 120px; max-width: 780px; margin: 0 auto; }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .q-label { font-size: 12px; color: var(--accent); margin-bottom: 6px; font-weight: 500; }
+  .q-text { font-size: 14px; line-height: 1.5; color: var(--text); margin-bottom: 14px; }
+
+  .scale { display: flex; gap: 8px; }
+  .scale-btn {
+    flex: 1;
+    padding: 14px 4px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    user-select: none;
+  }
+  .scale-btn:active { transform: scale(0.94); }
+  .scale-btn.selected { border-color: var(--accent); background: rgba(123,97,255,0.18); color: var(--accent); }
+
+  .binary { display: flex; gap: 12px; }
+  .bin-btn {
+    flex: 1;
+    padding: 16px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    user-select: none;
+  }
+  .bin-btn:active { transform: scale(0.96); }
+  .bin-btn.selected-yes { border-color: var(--green); background: rgba(45,206,137,0.15); color: var(--green); }
+  .bin-btn.selected-no { border-color: var(--accent2); background: rgba(255,107,107,0.15); color: var(--accent2); }
+
+  .score-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .score-label { font-size: 13px; color: var(--muted); }
+  .score-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .score-profile { font-size: 14px; }
+
+  .save-btn {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 740px;
+    padding: 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--r);
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 32px rgba(123,97,255,0.35);
+    user-select: none;
+  }
+  .save-btn:active { transform: translateX(-50%) scale(0.98); background: #6247ff; }
+  .save-btn:disabled { background: var(--border); color: var(--muted); box-shadow: none; }
+
+  .results-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .stat-box { background: var(--surface2); border-radius: 10px; padding: 14px; text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .entry-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .entry-name { font-size: 14px; font-weight: 500; }
+  .entry-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .entry-score { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; min-width: 40px; text-align: right; }
+  .entry-del {
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.3);
+    color: var(--accent2);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 12px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .export-btn {
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    border: 1.5px solid var(--green);
+    border-radius: var(--r);
+    color: var(--green);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+  .export-btn:active { background: rgba(45,206,137,0.1); }
+
+  /* pending queue banner */
+  .queue-banner {
+    background: rgba(255,209,102,0.1);
+    border: 1px solid rgba(255,209,102,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--yellow);
+    margin-bottom: 14px;
+    display: none;
+  }
+  .queue-banner.show { display: block; }
+
+  .hidden { display: none !important; }
+
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--green);
+    color: #0d0d0f;
+    padding: 12px 24px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Rele<span>vers</span></div>
+  <div class="header-right">
+    <div class="sync-indicator idle" id="sync-status">● Sheet</div>
+    <div class="counter-pill" onclick="showTab('results')">
+      <span id="total-count">0</span> interviste
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-utenti" onclick="showTab('utenti')">👤 Utenti</div>
+  <div class="tab" id="tab-locali" onclick="showTab('locali')">🏠 Locali</div>
+  <div class="tab" id="tab-results" onclick="showTab('results')">📊 Dati</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════ UTENTI ══════════════════════ -->
+<div class="main" id="panel-utenti">
+  <div class="queue-banner" id="queue-banner-u"></div>
+
+  <div class="section-title">Anagrafica</div>
+  <div class="two-col">
+    <div class="field">
+      <label>Nome (opzionale)</label>
+      <input type="text" id="u-nome" placeholder="es. Marco">
+    </div>
+    <div class="field">
+      <label>Età</label>
+      <input type="number" id="u-eta" placeholder="es. 26" min="16" max="80">
+    </div>
+  </div>
+  <div class="field">
+    <label>Contatto beta (email / tel)</label>
+    <input type="text" id="u-contatto" placeholder="vuole partecipare ai test?">
+  </div>
+
+  <div class="section-title">Domande</div>
+
+  <div class="q-card">
+    <div class="q-label">Q1</div>
+    <div class="q-text">Esci senza piano preciso — quanto spesso?</div>
+    <div class="scale" id="u-q1">
+      <button class="scale-btn" onclick="pick('u-q1',1)">1<br><span style="font-size:10px;color:var(--muted)">mai</span></button>
+      <button class="scale-btn" onclick="pick('u-q1',2)">2</button>
+      <button class="scale-btn" onclick="pick('u-q1',3)">3<br><span style="font-size:10px;color:var(--muted)">a volte</span></button>
+      <button class="scale-btn" onclick="pick('u-q1',4)">4</button>
+      <button class="scale-btn" onclick="pick('u-q1',5)">5<br><span style="font-size:10px;color:var(--muted)">spesso</span></button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q2 — Usa già app per decidere dove andare?</div>
+    <div class="binary" id="u-q2">
+      <button class="bin-btn" onclick="pickBin('u-q2',1)">✓ Sì</button>
+      <button class="bin-btn" onclick="pickBin('u-q2',0)">✗ No</button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q3</div>
+    <div class="q-text">Quante volte non sai dove "succede qualcosa" stasera?</div>
+    <div class="scale" id="u-q3">
+      <button class="scale-btn" onclick="pick('u-q3',1)">1<br><span style="font-size:10px;color:var(--muted)">mai</span></button>
+      <button class="scale-btn" onclick="pick('u-q3',2)">2</button>
+      <button class="scale-btn" onclick="pick('u-q3',3)">3</button>
+      <button class="scale-btn" onclick="pick('u-q3',4)">4</button>
+      <button class="scale-btn" onclick="pick('u-q3',5)">5<br><span style="font-size:10px;color:var(--muted)">spesso</span></button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q4 — Ha cambiato posto su segnalazione di qualcuno?</div>
+    <div class="binary" id="u-q4">
+      <button class="bin-btn" onclick="pickBin('u-q4',1)">✓ Sì</button>
+      <button class="bin-btn" onclick="pickBin('u-q4',0)">✗ No</button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q5</div>
+    <div class="q-text">Userebbe un radar real-time per vedere dove si radunano persone con i tuoi stessi gusti?</div>
+    <div class="scale" id="u-q5">
+      <button class="scale-btn" onclick="pick('u-q5',1)">1<br><span style="font-size:10px;color:var(--muted)">no</span></button>
+      <button class="scale-btn" onclick="pick('u-q5',2)">2</button>
+      <button class="scale-btn" onclick="pick('u-q5',3)">3<br><span style="font-size:10px;color:var(--muted)">forse</span></button>
+      <button class="scale-btn" onclick="pick('u-q5',4)">4</button>
+      <button class="scale-btn" onclick="pick('u-q5',5)">5<br><span style="font-size:10px;color:var(--muted)">sì!</span></button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Reazione al concept</div>
+    <div class="q-text">Dopo aver mostrato Relevers — reazione?</div>
+    <div class="scale" id="u-react">
+      <button class="scale-btn" onclick="pick('u-react',1)">1<br><span style="font-size:10px;color:var(--muted)">negativa</span></button>
+      <button class="scale-btn" onclick="pick('u-react',2)">2</button>
+      <button class="scale-btn" onclick="pick('u-react',3)">3<br><span style="font-size:10px;color:var(--muted)">neutro</span></button>
+      <button class="scale-btn" onclick="pick('u-react',4)">4</button>
+      <button class="scale-btn" onclick="pick('u-react',5)">5<br><span style="font-size:10px;color:var(--muted)">positiva</span></button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Note libere — frase notevole dell'intervistato</label>
+    <input type="text" id="u-note" placeholder="cita le sue parole esatte...">
+  </div>
+
+  <div class="score-bar" id="u-score-bar" style="display:none">
+    <div>
+      <div class="score-label">SCORE</div>
+      <div class="score-profile" id="u-profile"></div>
+    </div>
+    <div class="score-value" id="u-score-val">—</div>
+  </div>
+
+  <button class="save-btn" onclick="saveUtente()">SALVA INTERVISTA →</button>
+</div>
+
+<!-- ══════════════════════ LOCALI ══════════════════════ -->
+<div class="main hidden" id="panel-locali">
+  <div class="queue-banner" id="queue-banner-l"></div>
+
+  <div class="section-title">Locale</div>
+  <div class="field">
+    <label>Nome locale</label>
+    <input type="text" id="l-nome" placeholder="es. Bunker Torino">
+  </div>
+  <div class="two-col">
+    <div class="field">
+      <label>Tipo</label>
+      <select id="l-tipo">
+        <option value="">— seleziona —</option>
+        <option>Bar</option>
+        <option>Club / Discoteca</option>
+        <option>Ristorante</option>
+        <option>Cocktail bar</option>
+        <option>Pub</option>
+        <option>Altro</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Contatto (nome / email / tel)</label>
+      <input type="text" id="l-contatto" placeholder="referente">
+    </div>
+  </div>
+
+  <div class="section-title">Domande</div>
+
+  <div class="q-card">
+    <div class="q-label">Q1</div>
+    <div class="q-text">Come comunicate serate speciali ai clienti?</div>
+    <div class="scale" id="l-q1">
+      <button class="scale-btn" onclick="pick('l-q1',1)">1<br><span style="font-size:10px;color:var(--muted)">nessuno</span></button>
+      <button class="scale-btn" onclick="pick('l-q1',2)">2</button>
+      <button class="scale-btn" onclick="pick('l-q1',3)">3</button>
+      <button class="scale-btn" onclick="pick('l-q1',4)">4</button>
+      <button class="scale-btn" onclick="pick('l-q1',5)">5<br><span style="font-size:10px;color:var(--muted)">avanzato</span></button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q2 — Stima % clienti che arrivano "per caso"</div>
+    <div class="scale" id="l-q2">
+      <button class="scale-btn" onclick="pick('l-q2',1)">~10%</button>
+      <button class="scale-btn" onclick="pick('l-q2',2)">~25%</button>
+      <button class="scale-btn" onclick="pick('l-q2',3)">~50%</button>
+      <button class="scale-btn" onclick="pick('l-q2',4)">~75%</button>
+      <button class="scale-btn" onclick="pick('l-q2',5)">~90%</button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q3 — Ha già usato app / piattaforme per portare traffico?</div>
+    <div class="binary" id="l-q3">
+      <button class="bin-btn" onclick="pickBin('l-q3',1)">✓ Sì</button>
+      <button class="bin-btn" onclick="pickBin('l-q3',0)">✗ No</button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q4</div>
+    <div class="q-text">Pagherebbe per uno strumento che porta persone già intenzionate a uscire?</div>
+    <div class="scale" id="l-q4">
+      <button class="scale-btn" onclick="pick('l-q4',1)">1<br><span style="font-size:10px;color:var(--muted)">no</span></button>
+      <button class="scale-btn" onclick="pick('l-q4',2)">2</button>
+      <button class="scale-btn" onclick="pick('l-q4',3)">3</button>
+      <button class="scale-btn" onclick="pick('l-q4',4)">4</button>
+      <button class="scale-btn" onclick="pick('l-q4',5)">5<br><span style="font-size:10px;color:var(--muted)">sì</span></button>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-label">Q5 — Valore stimato per 1 cliente in più per serata (€)</div>
+    <div class="scale" id="l-q5">
+      <button class="scale-btn" onclick="pick('l-q5',1)">€5</button>
+      <button class="scale-btn" onclick="pick('l-q5',2)">€10</button>
+      <button class="scale-btn" onclick="pick('l-q5',3)">€20</button>
+      <button class="scale-btn" onclick="pick('l-q5',4)">€30</button>
+      <button class="scale-btn" onclick="pick('l-q5',5)">€50+</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Note libere</label>
+    <input type="text" id="l-note" placeholder="osservazioni, obiezioni, interesse...">
+  </div>
+
+  <div class="score-bar" id="l-score-bar" style="display:none">
+    <div>
+      <div class="score-label">SCORE</div>
+      <div class="score-profile" id="l-profile"></div>
+    </div>
+    <div class="score-value" id="l-score-val">—</div>
+  </div>
+
+  <button class="save-btn" onclick="saveLocale()">SALVA INTERVISTA →</button>
+</div>
+
+<!-- ══════════════════════ RISULTATI ══════════════════════ -->
+<div class="main hidden" id="panel-results">
+
+  <div class="section-title">Statistiche utenti</div>
+  <div class="results-header">
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-num" id="r-u-tot">0</div>
+        <div class="stat-lbl">Intervistati</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="r-u-score">—</div>
+        <div class="stat-lbl">Score medio</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="r-u-high" style="color:var(--green)">0%</div>
+        <div class="stat-lbl">🔥 High Intent</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="r-u-contacts">0</div>
+        <div class="stat-lbl">Contatti beta</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Statistiche locali</div>
+  <div class="results-header">
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-num" id="r-l-tot">0</div>
+        <div class="stat-lbl">Intervistati</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="r-l-score">—</div>
+        <div class="stat-lbl">Score medio</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="r-l-hot" style="color:var(--green)">0%</div>
+        <div class="stat-lbl">✅ Hot Lead</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="r-l-pay">0%</div>
+        <div class="stat-lbl">Pagherebbero (4+)</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="export-btn" onclick="exportCSV()">⬇ ESPORTA CSV</button>
+  <button class="export-btn" onclick="syncPending()" style="border-color:var(--yellow);color:var(--yellow)">↑ RISINCRONIZZA PENDENTI</button>
+
+  <div class="section-title">Utenti registrati</div>
+  <div id="list-utenti"></div>
+
+  <div class="section-title">Locali registrati</div>
+  <div id="list-locali"></div>
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzA8JxYtn2lCGOBiNse0R1x2-7CzG2a3OtGrn30ZHEVRyxLvSxq0HeFDyvNVTC6a-rl/exec';
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+const state = {
+  utenti: JSON.parse(localStorage.getItem('rv_utenti') || '[]'),
+  locali: JSON.parse(localStorage.getItem('rv_locali') || '[]'),
+  pending: JSON.parse(localStorage.getItem('rv_pending') || '[]'),
+  picks: {}
+};
+
+function saveLocal() {
+  localStorage.setItem('rv_utenti', JSON.stringify(state.utenti));
+  localStorage.setItem('rv_locali', JSON.stringify(state.locali));
+  localStorage.setItem('rv_pending', JSON.stringify(state.pending));
+  updateCounter();
+  updateQueueBanner();
+}
+
+// ── SHEET SYNC ─────────────────────────────────────────────────────────────
+function setSyncStatus(s) {
+  const el = document.getElementById('sync-status');
+  el.className = 'sync-indicator ' + s;
+  const labels = { idle: '● Sheet', syncing: '⟳ Sync...', ok: '✓ Sheet', err: '! Offline' };
+  el.textContent = labels[s] || s;
+}
+
+function sendToSheet(record) {
+  return new Promise((resolve) => {
+    setSyncStatus('syncing');
+    const cbName = 'rv_cb_' + Date.now();
+    const script = document.createElement('script');
+    const encoded = encodeURIComponent(JSON.stringify(record));
+    script.src = SHEET_URL + '?data=' + encoded + '&callback=' + cbName;
+    
+    const timer = setTimeout(() => {
+      cleanup();
+      setSyncStatus('err');
+      setTimeout(() => setSyncStatus('idle'), 5000);
+      resolve(false);
+    }, 10000);
+
+    window[cbName] = function(response) {
+      cleanup();
+      if (response && response.ok) {
+        setSyncStatus('ok');
+        setTimeout(() => setSyncStatus('idle'), 3000);
+        resolve(true);
+      } else {
+        setSyncStatus('err');
+        setTimeout(() => setSyncStatus('idle'), 5000);
+        resolve(false);
+      }
+    };
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    script.onerror = () => { cleanup(); setSyncStatus('err'); resolve(false); };
+    document.head.appendChild(script);
+  });
+}
+
+async function syncPending() {
+  if (state.pending.length === 0) { toast('Nessun record pendente'); return; }
+  toast('Risincronizzazione ' + state.pending.length + ' record...');
+  const failed = [];
+  for (const rec of state.pending) {
+    const ok = await sendToSheet(rec);
+    if (!ok) failed.push(rec);
+  }
+  state.pending = failed;
+  saveLocal();
+  toast(failed.length === 0 ? '✓ Tutti sincronizzati' : failed.length + ' ancora in attesa');
+}
+
+function updateQueueBanner() {
+  const n = state.pending.length;
+  ['u','l'].forEach(p => {
+    const b = document.getElementById('queue-banner-' + p);
+    if (n > 0) {
+      b.textContent = '⚠ ' + n + ' intervista' + (n>1?'e':'') + ' in attesa di sync. Connettiti a internet per inviarle.';
+      b.classList.add('show');
+    } else {
+      b.classList.remove('show');
+    }
+  });
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function showTab(name) {
+  ['utenti','locali','results'].forEach(t => {
+    document.getElementById('panel-'+t).classList.toggle('hidden', t !== name);
+    document.getElementById('tab-'+t).classList.toggle('active', t === name);
+  });
+  if (name === 'results') renderResults();
+}
+
+// ── PICK HELPERS ──────────────────────────────────────────────────────────
+function pick(groupId, val) {
+  state.picks[groupId] = val;
+  document.querySelectorAll(`#${groupId} .scale-btn`).forEach((btn, i) => {
+    btn.classList.toggle('selected', i+1 === val);
+  });
+  updateLiveScore(groupId);
+}
+
+function pickBin(groupId, val) {
+  state.picks[groupId] = val;
+  const btns = document.querySelectorAll(`#${groupId} .bin-btn`);
+  btns[0].className = 'bin-btn' + (val === 1 ? ' selected-yes' : '');
+  btns[1].className = 'bin-btn' + (val === 0 ? ' selected-no' : '');
+  updateLiveScore(groupId);
+}
+
+// ── LIVE SCORE ─────────────────────────────────────────────────────────────
+function updateLiveScore(groupId) {
+  if (groupId.startsWith('u-')) {
+    const vals = ['u-q1','u-q3','u-q5','u-react'].map(k => state.picks[k]).filter(v => v !== undefined);
+    if (!vals.length) return;
+    const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+    const bar = document.getElementById('u-score-bar');
+    bar.style.display = 'flex';
+    document.getElementById('u-score-val').textContent = avg.toFixed(1);
+    const sv = document.getElementById('u-score-val');
+    const prof = document.getElementById('u-profile');
+    if (avg >= 4) { sv.style.color='var(--green)'; prof.textContent='🔥 High Intent'; }
+    else if (avg >= 2.5) { sv.style.color='var(--yellow)'; prof.textContent='⚡ Mid Intent'; }
+    else { sv.style.color='var(--accent2)'; prof.textContent='❄️ Low Intent'; }
+  }
+  if (groupId.startsWith('l-')) {
+    const q1 = state.picks['l-q1'];
+    const q3 = state.picks['l-q3'];
+    const q4 = state.picks['l-q4'];
+    const vals = [q1, q3 !== undefined ? q3*5 : undefined, q4].filter(v => v !== undefined);
+    if (!vals.length) return;
+    const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+    document.getElementById('l-score-bar').style.display = 'flex';
+    document.getElementById('l-score-val').textContent = avg.toFixed(1);
+    const sv = document.getElementById('l-score-val');
+    const prof = document.getElementById('l-profile');
+    if (avg >= 4) { sv.style.color='var(--green)'; prof.textContent='✅ Hot Lead'; }
+    else if (avg >= 2.5) { sv.style.color='var(--yellow)'; prof.textContent='🔄 Warm Lead'; }
+    else { sv.style.color='var(--accent2)'; prof.textContent='❌ Cold Lead'; }
+  }
+}
+
+// ── SAVE UTENTE ───────────────────────────────────────────────────────────
+async function saveUtente() {
+  const q1=state.picks['u-q1'], q3=state.picks['u-q3'],
+        q5=state.picks['u-q5'], react=state.picks['u-react'];
+  if (!q1 && !q3 && !q5 && !react) { toast('Compila almeno una risposta'); return; }
+  const vals = [q1,q3,q5,react].filter(v=>v!==undefined);
+  const score = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const profile = score>=4 ? '🔥 High Intent' : score>=2.5 ? '⚡ Mid Intent' : '❄️ Low Intent';
+
+  const record = {
+    tipo: 'Utente',
+    id: Date.now(),
+    data: new Date().toLocaleDateString('it'),
+    nome: document.getElementById('u-nome').value || '—',
+    eta: document.getElementById('u-eta').value || '—',
+    contatto: document.getElementById('u-contatto').value || '',
+    q1: q1||'', q2: state.picks['u-q2']!==undefined?state.picks['u-q2']:'',
+    q3: q3||'', q4: state.picks['u-q4']!==undefined?state.picks['u-q4']:'',
+    q5: q5||'', react: react||'',
+    note: document.getElementById('u-note').value || '',
+    score: parseFloat(score.toFixed(2)), profile
+  };
+
+  state.utenti.push(record);
+
+  // Try sync — if fails, queue it
+  const ok = await sendToSheet(record);
+  if (!ok) {
+    state.pending.push(record);
+    toast('✓ Salvato localmente (sync in attesa)');
+  } else {
+    toast('✓ Salvato + inviato al Sheet — ' + profile);
+  }
+
+  saveLocal();
+  resetForm('u');
+}
+
+// ── SAVE LOCALE ───────────────────────────────────────────────────────────
+async function saveLocale() {
+  const q1=state.picks['l-q1'], q3=state.picks['l-q3'], q4=state.picks['l-q4'];
+  if (!q1 && q3===undefined && !q4) { toast('Compila almeno una risposta'); return; }
+  const vals = [q1, q3!==undefined?q3*5:undefined, q4].filter(v=>v!==undefined);
+  const score = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const profile = score>=4 ? '✅ Hot Lead' : score>=2.5 ? '🔄 Warm Lead' : '❌ Cold Lead';
+
+  const record = {
+    tipo: 'Locale',
+    id: Date.now(),
+    data: new Date().toLocaleDateString('it'),
+    nome: document.getElementById('l-nome').value || '—',
+    tipoLocale: document.getElementById('l-tipo').value || '—',
+    contatto: document.getElementById('l-contatto').value || '',
+    q1: q1||'', q2: state.picks['l-q2']||'', q3: q3!==undefined?q3:'',
+    q4: q4||'', q5: state.picks['l-q5']||'',
+    note: document.getElementById('l-note').value || '',
+    score: parseFloat(score.toFixed(2)), profile
+  };
+
+  state.locali.push(record);
+
+  const ok = await sendToSheet(record);
+  if (!ok) {
+    state.pending.push(record);
+    toast('✓ Salvato localmente (sync in attesa)');
+  } else {
+    toast('✓ Salvato + inviato al Sheet — ' + profile);
+  }
+
+  saveLocal();
+  resetForm('l');
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────────
+function resetForm(prefix) {
+  ['nome','eta','contatto','note'].forEach(f => {
+    const el = document.getElementById(prefix+'-'+f);
+    if (el) el.value = '';
+  });
+  if (prefix === 'l') document.getElementById('l-tipo').value = '';
+  ['q1','q2','q3','q4','q5','react'].forEach(q => {
+    const key = prefix+'-'+q;
+    delete state.picks[key];
+    document.querySelectorAll(`#${key} .scale-btn`).forEach(b => b.className = 'scale-btn');
+    document.querySelectorAll(`#${key} .bin-btn`).forEach(b => b.className = 'bin-btn');
+  });
+  document.getElementById(prefix+'-score-bar').style.display = 'none';
+}
+
+// ── RESULTS ──────────────────────────────────────────────────────────────
+function renderResults() {
+  const u = state.utenti;
+  const l = state.locali;
+
+  document.getElementById('r-u-tot').textContent = u.length;
+  if (u.length) {
+    document.getElementById('r-u-score').textContent = (u.reduce((a,b)=>a+b.score,0)/u.length).toFixed(1);
+    const hi = u.filter(x=>x.profile&&x.profile.includes('High')).length;
+    document.getElementById('r-u-high').textContent = Math.round(hi/u.length*100)+'%';
+    document.getElementById('r-u-contacts').textContent = u.filter(x=>x.contatto).length;
+  }
+
+  document.getElementById('r-l-tot').textContent = l.length;
+  if (l.length) {
+    document.getElementById('r-l-score').textContent = (l.reduce((a,b)=>a+b.score,0)/l.length).toFixed(1);
+    const hot = l.filter(x=>x.profile&&x.profile.includes('Hot')).length;
+    document.getElementById('r-l-hot').textContent = Math.round(hot/l.length*100)+'%';
+    const pay = l.filter(x=>x.q4>=4).length;
+    document.getElementById('r-l-pay').textContent = Math.round(pay/l.length*100)+'%';
+  }
+
+  const lu = document.getElementById('list-utenti');
+  lu.innerHTML = u.length ? u.slice().reverse().map(x => `
+    <div class="entry-item">
+      <div>
+        <div class="entry-name">${x.nome} ${x.eta!=='—'?'('+x.eta+'a)':''} ${x.contatto?'📞':''}</div>
+        <div class="entry-meta">${x.data} · ${x.profile} ${x.note?'· '+x.note.substring(0,40):''}</div>
+      </div>
+      <div style="display:flex;align-items:center">
+        <div class="entry-score" style="color:${x.score>=4?'var(--green)':x.score>=2.5?'var(--yellow)':'var(--accent2)'}">${x.score}</div>
+        <button class="entry-del" onclick="deleteEntry('utenti',${x.id})">✕</button>
+      </div>
+    </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:16px 0">Nessuna intervista ancora</div>';
+
+  const ll = document.getElementById('list-locali');
+  ll.innerHTML = l.length ? l.slice().reverse().map(x => `
+    <div class="entry-item">
+      <div>
+        <div class="entry-name">${x.nome} <span style="color:var(--muted);font-size:12px">${x.tipoLocale||x.tipo||''}</span> ${x.contatto?'📞':''}</div>
+        <div class="entry-meta">${x.data} · ${x.profile} ${x.note?'· '+x.note.substring(0,40):''}</div>
+      </div>
+      <div style="display:flex;align-items:center">
+        <div class="entry-score" style="color:${x.score>=4?'var(--green)':x.score>=2.5?'var(--yellow)':'var(--accent2)'}">${x.score}</div>
+        <button class="entry-del" onclick="deleteEntry('locali',${x.id})">✕</button>
+      </div>
+    </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:16px 0">Nessuna intervista ancora</div>';
+}
+
+function deleteEntry(type, id) {
+  state[type] = state[type].filter(x => x.id !== id);
+  saveLocal();
+  renderResults();
+}
+
+function updateCounter() {
+  document.getElementById('total-count').textContent = state.utenti.length + state.locali.length;
+}
+
+// ── EXPORT CSV ───────────────────────────────────────────────────────────
+function exportCSV() {
+  let csv = 'TIPO,ID,Data,Nome,Età/Tipo,Contatto,Q1,Q2,Q3,Q4,Q5,React,Note,Score,Profilo\n';
+  state.utenti.forEach(x => {
+    csv += `Utente,${x.id},${x.data},"${x.nome}",${x.eta},"${x.contatto}",${x.q1},${x.q2},${x.q3},${x.q4},${x.q5},${x.react},"${x.note}",${x.score},"${x.profile}"\n`;
+  });
+  state.locali.forEach(x => {
+    csv += `Locale,${x.id},${x.data},"${x.nome}","${x.tipoLocale||x.tipo||''}","${x.contatto}",${x.q1},${x.q2},${x.q3},${x.q4},${x.q5},,"${x.note}",${x.score},"${x.profile}"\n`;
+  });
+  try {
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'relevers_interviste_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  } catch(e) {}
+  showExportModal(csv);
+}
+
+function showExportModal(csv) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:flex-end`;
+  overlay.setAttribute('data-overlay','1');
+  overlay.innerHTML = `
+    <div style="background:#16161a;border-top:1px solid #2a2a35;border-radius:20px 20px 0 0;width:100%;padding:24px 20px 40px;max-height:70vh;display:flex;flex-direction:column;gap:14px">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700">Esporta CSV</div>
+      <div style="font-size:12px;color:#7070a0">Backup manuale. I dati sono già sul Sheet in tempo reale.</div>
+      <textarea readonly id="csv-export-area" style="flex:1;min-height:160px;background:#1e1e24;border:1px solid #2a2a35;border-radius:10px;color:#f0f0f5;font-family:'DM Mono',monospace;font-size:11px;padding:12px;resize:none;outline:none">${csv}</textarea>
+      <button onclick="copyCSV()" style="width:100%;padding:16px;background:#7b61ff;border:none;border-radius:14px;color:white;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer">COPIA TUTTO</button>
+      <button onclick="document.querySelector('[data-overlay]').remove()" style="width:100%;padding:14px;background:transparent;border:1.5px solid #2a2a35;border-radius:14px;color:#7070a0;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer">CHIUDI</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => { const ta = document.getElementById('csv-export-area'); ta.focus(); ta.select(); }, 200);
+}
+
+function copyCSV() {
+  const ta = document.getElementById('csv-export-area');
+  ta.select();
+  try { navigator.clipboard.writeText(ta.value).then(() => toast('✓ Copiato')); }
+  catch(e) { document.execCommand('copy'); toast('✓ Copiato'); }
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+updateCounter();
+updateQueueBanner();
+
+// Auto-retry pending on load if online
+if (navigator.onLine && state.pending.length > 0) {
+  setTimeout(syncPending, 2000);
+}
+</script>
+</body>
+</html>
