@@ -1,0 +1,35 @@
+const SHEET_ID = '1FZOCHurOjSgN472ZYwt_uu1CknbEOvjXXpOFyhVkB1U';
+
+function doGet(e) {
+  try {
+    const data = JSON.parse(decodeURIComponent(e.parameter.data));
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheetName = data.tipo === 'Locale' ? 'Locali' : 'Utenti';
+    let sheet = ss.getSheetByName(sheetName);
+    
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      if (data.tipo === 'Locale') {
+        sheet.appendRow(['ID','Data','Nome','Tipo','Contatto','Q1','Q2','Q3','Q4','Q5','Note','Score','Profilo']);
+      } else {
+        sheet.appendRow(['ID','Data','Nome','Età','Contatto','Q1','Q2','Q3','Q4','Q5','React','Note','Score','Profilo']);
+      }
+    }
+
+    if (data.tipo === 'Locale') {
+      sheet.appendRow([data.id,data.data,data.nome,data.tipoLocale,data.contatto,
+        data.q1,data.q2,data.q3,data.q4,data.q5,data.note,data.score,data.profile]);
+    } else {
+      sheet.appendRow([data.id,data.data,data.nome,data.eta,data.contatto,
+        data.q1,data.q2,data.q3,data.q4,data.q5,data.react,data.note,data.score,data.profile]);
+    }
+
+    const cb = e.parameter.callback || 'cb';
+    return ContentService.createTextOutput(cb + '(' + JSON.stringify({ok:true}) + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  } catch(err) {
+    const cb = e.parameter.callback || 'cb';
+    return ContentService.createTextOutput(cb + '(' + JSON.stringify({ok:false,error:err.toString()}) + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+}
