@@ -293,7 +293,8 @@
 </div>
 
 <script>
-const SHEET_URL = 'https://sheetdb.io/api/v1/n0b4exavnarff';
+const SHEET_URL_UTENTI = 'https://sheetdb.io/api/v1/n0b4exavnarff';
+const SHEET_URL_LOCALI = 'https://sheetdb.io/api/v1/67x8qpx84bype';
 let _sending = false;
 
 const state = {
@@ -328,8 +329,9 @@ function setSyncStatus(s) {
 function sendToSheet(record) {
   return new Promise((resolve) => {
     setSyncStatus('syncing');
+    const url = record.tipo === 'Locale' ? SHEET_URL_LOCALI : SHEET_URL_UTENTI;
     const payload = { data: [record] };
-    fetch(SHEET_URL, {
+    fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(payload)
