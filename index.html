@@ -327,21 +327,21 @@ function setSyncStatus(s) {
 
 function sendToSheet(record) {
   return new Promise((resolve) => {
+    _sending = true;
     setSyncStatus('syncing');
+    const cbName = 'rv_cb_' + Date.now();
+    const script = document.createElement('script');
     const encoded = encodeURIComponent(JSON.stringify(record));
-    const url = SHEET_URL + '?data=' + encoded;
-    
-    fetch(url, { method: 'GET', mode: 'no-cors' })
-      .then(() => {
-        setSyncStatus('ok');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-        resolve(true);
-      })
-      .catch(() => {
-        setSyncStatus('err');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-        resolve(false);
-      });
+    script.src = SHEET_URL + '?data=' + encoded + '&callback=' + cbName;
+    const timer = setTimeout(() => { cleanup(); setSyncStatus('err'); setTimeout(() => setSyncStatus('idle'), 3000); resolve(false); }, 20000);
+    window[cbName] = function(response) {
+      cleanup();
+      if (response && response.ok) { setSyncStatus('ok'); setTimeout(() => setSyncStatus('idle'), 3000); resolve(true); }
+      else { setSyncStatus('err'); setTimeout(() => setSyncStatus('idle'), 3000); resolve(false); }
+    };
+    function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); _sending = false; }
+    script.onerror = () => { cleanup(); setSyncStatus('err'); setTimeout(() => setSyncStatus('idle'), 3000); resolve(false); };
+    document.head.appendChild(script);
   });
 }
 
